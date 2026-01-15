@@ -1,5 +1,5 @@
-# Data files (JSON database)
-data/*.json
+# Data files (JSON database) - Initial files are tracked for first deployment
+# After deployment, persistent storage in Coolify will handle changes
 !data/.gitkeep
 
 # Environment files

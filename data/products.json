@@ -1,0 +1,62 @@
+[
+    {
+        "id": 1,
+        "name": "Seraph Turmeric",
+        "prices": {
+            "NGN": 2500,
+            "GBP": 3.5,
+            "USD": 4.4000000000000003552713678800500929355621337890625
+        },
+        "description": "Earthy and therapeutic, providing natural anti-inflammatory benefits for your gums.",
+        "image": "product_69602cd44600d.jpg",
+        "flavour": "Turmeric",
+        "stock": 100,
+        "status": "active",
+        "updated_at": "2026-01-08 22:43:04",
+        "hover_image": "product_69602cd75f3ee.jpg",
+        "gallery": [
+            "product_696032c284bd4.jpg"
+        ],
+        "price": 2500
+    },
+    {
+        "id": 2,
+        "name": "Seraph Strawberry",
+        "prices": {
+            "NGN": 2500,
+            "GBP": 3.5,
+            "USD": 4.4000000000000003552713678800500929355621337890625
+        },
+        "description": "Sweet and refreshing, perfect for a delightful morning routine. Kid friendly!",
+        "image": "product_69602ce110c19.jpg",
+        "flavour": "Strawberry",
+        "stock": 100,
+        "status": "active",
+        "price": 2500,
+        "hover_image": "product_69602ce3ba558.jpg",
+        "gallery": [
+            "product_696032cd03925.jpg"
+        ],
+        "updated_at": "2026-01-08 22:42:50"
+    },
+    {
+        "id": 3,
+        "name": "Seraph Peach",
+        "prices": {
+            "NGN": 2500,
+            "GBP": 3.5,
+            "USD": 4.4000000000000003552713678800500929355621337890625
+        },
+        "description": "Subtle and delicate, offering a unique fresh breath experience.",
+        "image": "product_69602ceb8dc0e.jpg",
+        "flavour": "Peach",
+        "stock": 100,
+        "status": "active",
+        "price": 2500,
+        "hover_image": "product_69602cee03080.jpg",
+        "gallery": [
+            "product_696032d756b7d.jpg"
+        ],
+        "updated_at": "2026-01-08 22:42:59"
+    }
+]

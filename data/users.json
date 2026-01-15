@@ -1,0 +1,22 @@
+[
+    {
+        "name": "mayowa odunoye",
+        "email": "odunoyemayowa@gmail.com",
+        "password": "$2y$10$LDTIoMG9uKJyFACxFm7Qfu6s\/I.X6sjG6VUNjcuyNjrkoYLm7VdoK",
+        "created_at": "2026-01-07 10:21:05",
+        "id": 1,
+        "addresses": [
+            {
+                "csrf_token": "f0eeeeea7ce7b0416cd2527b2458f71f0251f8ad128d2e1090239e765cd90032",
+                "id": "addr_03c59d3e489a4d93",
+                "first_name": "batsi",
+                "last_name": "odunoye",
+                "address_line1": "home",
+                "city": "lagos",
+                "country": "Nigeria",
+                "phone": "+2349292999999",
+                "is_default": true
+            }
+        ]
+    }
+]
