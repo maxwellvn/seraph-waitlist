@@ -36,7 +36,7 @@ define('APP_VERSION', env('APP_VERSION', '1.0.0'));
 define('APP_ENV', env('APP_ENV', 'development'));
 
 // Base URL Configuration
-define('BASE_URL', env('BASE_URL', '/seraph-waitlist/'));
+define('BASE_URL', env('BASE_URL', '/'));
 define('BASE_PATH', __DIR__ . '/../');
 
 // Directory Paths
