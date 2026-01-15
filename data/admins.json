@@ -1,0 +1,12 @@
+[
+    {
+        "id": 1,
+        "name": "Admin",
+        "email": "admin@gmail.com",
+        "password": "$2y$12$jBK/SF7R6M6ccEE/FvqQ4u9Y6mjtjNOLWphSirwbkUHSp9vSlYoqm",
+        "role": "admin",
+        "status": "active",
+        "created_at": "2026-01-15 21:45:00",
+        "last_login": null
+    }
+]

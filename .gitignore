@@ -1,5 +1,5 @@
 # Data files (JSON database)
-data/*.json
+# Initial JSON files are tracked, but you may want to ignore them locally after setup
 !data/.gitkeep
 
 # Environment files
