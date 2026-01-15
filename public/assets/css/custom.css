@@ -1,0 +1,486 @@
+/* =============================================
+   SERAPH - Custom Styles
+   Professional, Human-Designed Aesthetic
+   ============================================= */
+
+/* Base Resets & Smooth Behavior */
+html {
+    scroll-behavior: smooth;
+}
+
+html.lenis,
+html.lenis body {
+    height: auto;
+}
+
+.lenis.lenis-smooth {
+    scroll-behavior: auto !important;
+}
+
+/* =============================================
+   Typography Refinements
+   ============================================= */
+
+/* Improve text rendering */
+body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+}
+
+/* Headings */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    text-wrap: balance;
+}
+
+/* Paragraphs */
+p {
+    text-wrap: pretty;
+}
+
+/* =============================================
+   Custom Scrollbar
+   ============================================= */
+
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #FAF6F1;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #C8956C;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #9A6B42;
+}
+
+/* Firefox scrollbar */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: #C8956C #FAF6F1;
+}
+
+/* =============================================
+   Focus States (Accessibility)
+   ============================================= */
+
+*:focus-visible {
+    outline: 2px solid #C8956C;
+    outline-offset: 3px;
+}
+
+/* Remove outline for mouse users */
+*:focus:not(:focus-visible) {
+    outline: none;
+}
+
+/* =============================================
+   Button Styles
+   ============================================= */
+
+.btn-primary {
+    background-color: #C8956C;
+    color: #FFFDF9;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-primary:hover {
+    background-color: #9A6B42;
+    transform: translateY(-2px);
+}
+
+.btn-primary:active {
+    transform: translateY(0);
+}
+
+.btn-outline {
+    background-color: transparent;
+    border: 1px solid #2D2A26;
+    color: #2D2A26;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-outline:hover {
+    background-color: #2D2A26;
+    color: #FFFDF9;
+}
+
+/* =============================================
+   Navigation Link Effects
+   ============================================= */
+
+.nav-link {
+    position: relative;
+}
+
+.nav-link::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 0;
+    height: 1px;
+    background-color: #C8956C;
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.nav-link:hover::after {
+    width: 100%;
+}
+
+/* =============================================
+   Animation Classes (GSAP Prep)
+   ============================================= */
+
+/* Reveal up animation */
+.reveal-up {
+    opacity: 0;
+    transform: translateY(30px);
+}
+
+/* Reveal from left */
+.reveal-left {
+    opacity: 0;
+    transform: translateX(-40px);
+}
+
+/* Reveal from right */
+.reveal-right {
+    opacity: 0;
+    transform: translateX(40px);
+}
+
+/* Reveal with scale */
+.reveal-scale {
+    opacity: 0;
+    transform: scale(0.95);
+}
+
+/* Stagger children container */
+.stagger-children>* {
+    opacity: 0;
+    transform: translateY(20px);
+}
+
+/* Hero element animations */
+.hero-title,
+.hero-subtitle,
+.hero-cta {
+    opacity: 0;
+    transform: translateY(30px);
+}
+
+.hero-image {
+    opacity: 0;
+    transform: scale(0.95);
+}
+
+/* =============================================
+   Image Effects
+   ============================================= */
+
+.img-reveal {
+    overflow: hidden;
+}
+
+.img-reveal img {
+    transform: scale(1.05);
+    transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.img-reveal:hover img {
+    transform: scale(1);
+}
+
+/* Parallax image container */
+.parallax-img {
+    will-change: transform;
+}
+
+/* =============================================
+   Card & Container Effects
+   ============================================= */
+
+/* Subtle hover lift for cards */
+.card-hover {
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+        box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-hover:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 40px -10px rgba(45, 42, 38, 0.1);
+}
+
+/* =============================================
+   FAQ Accordion Styles
+   ============================================= */
+
+.faq-item {
+    transition: border-color 0.3s ease;
+}
+
+.faq-item:hover {
+    border-color: rgba(200, 149, 108, 0.3);
+}
+
+.faq-toggle {
+    transition: background-color 0.3s ease;
+}
+
+.faq-toggle:hover {
+    background-color: rgba(250, 246, 241, 0.5);
+}
+
+.faq-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.faq-icon {
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* =============================================
+   Preloader Styles
+   ============================================= */
+
+.preloader {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #2D2A26;
+}
+
+.preloader-content {
+    text-align: center;
+}
+
+.preloader-logo {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 2.5rem;
+    font-weight: 400;
+    color: #FAF6F1;
+    letter-spacing: 0.3em;
+    margin-bottom: 2rem;
+}
+
+@media (min-width: 640px) {
+    .preloader-logo {
+        font-size: 3rem;
+    }
+}
+
+.preloader-bar {
+    width: 160px;
+    height: 2px;
+    background-color: rgba(250, 246, 241, 0.15);
+    border-radius: 1px;
+    overflow: hidden;
+    margin: 0 auto;
+}
+
+@media (min-width: 640px) {
+    .preloader-bar {
+        width: 200px;
+    }
+}
+
+.preloader-bar-fill {
+    height: 100%;
+    width: 0;
+    background-color: #C8956C;
+    transition: width 0.3s ease;
+}
+
+/* =============================================
+   Cookie Banner
+   ============================================= */
+
+.cookie-banner {
+    backdrop-filter: blur(12px);
+    background-color: rgba(45, 42, 38, 0.95);
+}
+
+/* =============================================
+   Selection Color
+   ============================================= */
+
+::selection {
+    background-color: #C8956C;
+    color: #FFFDF9;
+}
+
+::-moz-selection {
+    background-color: #C8956C;
+    color: #FFFDF9;
+}
+
+/* =============================================
+   Mobile Menu Hamburger
+   ============================================= */
+
+#mobileMenuBtn .hamburger-line {
+    transition: all 0.3s ease;
+}
+
+#mobileMenuBtn.active .hamburger-line:first-child {
+    transform: rotate(45deg) translate(4px, 4px);
+}
+
+#mobileMenuBtn.active .hamburger-line:last-child {
+    transform: rotate(-45deg) translate(4px, -4px);
+}
+
+/* =============================================
+   Form Elements
+   ============================================= */
+
+input:focus,
+select:focus,
+textarea:focus {
+    outline: none;
+    border-color: #C8956C;
+    box-shadow: 0 0 0 3px rgba(200, 149, 108, 0.15);
+}
+
+input,
+select,
+textarea {
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Prevent iOS zoom on input focus */
+@media (max-width: 640px) {
+
+    input,
+    select,
+    textarea {
+        font-size: 16px;
+    }
+}
+
+/* =============================================
+   Mobile Optimizations
+   ============================================= */
+
+@media (max-width: 640px) {
+
+    /* Improve touch targets */
+    button,
+    a,
+    input,
+    select {
+        min-height: 44px;
+    }
+
+    /* Adjust section padding */
+    section {
+        padding-left: 1.5rem;
+        padding-right: 1.5rem;
+    }
+}
+
+/* =============================================
+   Reduced Motion Support
+   ============================================= */
+
+@media (prefers-reduced-motion: reduce) {
+
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+
+    .reveal-up,
+    .reveal-left,
+    .reveal-right,
+    .reveal-scale,
+    .stagger-children>*,
+    .hero-title,
+    .hero-subtitle,
+    .hero-cta,
+    .hero-image {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+/* =============================================
+   Print Styles
+   ============================================= */
+
+@media print {
+
+    nav,
+    footer,
+    .preloader,
+    .cookie-banner,
+    #mobileMenu {
+        display: none !important;
+    }
+
+    body {
+        background: white !important;
+        color: black !important;
+    }
+
+    a {
+        text-decoration: underline;
+    }
+}
+
+/* =============================================
+   Utility Classes
+   ============================================= */
+
+/* Text balance for headings */
+.text-balance {
+    text-wrap: balance;
+}
+
+/* Gradient text (if needed) */
+.gradient-text {
+    background: linear-gradient(135deg, #C8956C 0%, #9A6B42 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Glass effect */
+.glass {
+    backdrop-filter: blur(12px);
+    background-color: rgba(255, 253, 249, 0.8);
+}
+
+/* Smooth image loading */
+img {
+    opacity: 1;
+    transition: opacity 0.3s ease;
+}
+
+img[data-src] {
+    opacity: 0;
+}
+
+img.loaded {
+    opacity: 1;
+}

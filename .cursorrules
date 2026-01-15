@@ -1,0 +1,351 @@
+# PHP Boilerplate - Development Rules
+
+## Project Type
+This is a **plain PHP boilerplate** (not MVC, not framework-based).
+- Use functional programming approach
+- Component-based architecture with functions
+- Router-based URL handling
+- JSON file-based database
+
+## Architecture Pattern
+
+### File Structure Convention
+```
+config/      - Configuration files only (config.php, database.php)
+router/      - Routing logic only (Router.php)
+includes/    - Helper/utility functions (helpers.php)
+components/  - Reusable PHP component functions
+pages/       - Page content HTML (no layout wrapper)
+data/        - JSON database files (*.json)
+public/      - Public assets (css, js, images)
+```
+
+### Entry Point (index.php)
+```php
+// CRITICAL ORDER:
+1. require_once config.php   // Load config FIRST
+2. session_start()            // Start session AFTER config
+3. Load other dependencies
+4. Define routes with $router->get() / $router->post()
+5. Call $router->run()
+```
+
+## Code Style Rules
+
+### 1. Routing Pattern
+```php
+// ✅ CORRECT
+$router->get('/path', function() {
+    renderLayout(PAGES_PATH . 'page.php', [
+        'pageTitle' => 'Page Title - ' . APP_NAME,
+        'dataVariable' => $someData
+    ]);
+});
+
+// ✅ Dynamic parameters
+$router->get('/user/:id', function($id) {
+    global $db;
+    $user = $db->findOne('users', ['id' => (int)$id]);
+    renderLayout(PAGES_PATH . 'user.php', ['user' => $user]);
+});
+
+// ❌ WRONG - Never use controller classes
+$router->get('/path', 'ControllerClass@method');
+```
+
+### 2. Component Pattern
+```php
+// ✅ CORRECT - Function returns HTML string
+function componentName($param1, $param2) {
+    return <<<HTML
+    <div class="bg-white border-2 border-gray-200">
+        <h3 class="font-poppins">{$param1}</h3>
+        <p class="font-inter">{$param2}</p>
+    </div>
+HTML;
+}
+
+// ❌ WRONG - Never echo inside component
+function componentName($param) {
+    echo "<div>content</div>";  // WRONG
+}
+```
+
+### 3. Page Pattern
+```php
+// ✅ CORRECT - pages/example.php
+<!-- Page content only -->
+<div class="max-w-7xl mx-auto px-4 py-16">
+    <h1 class="text-4xl font-bold font-playfair"><?php echo $pageTitle; ?></h1>
+    <p class="text-gray-600 font-inter"><?php echo $content; ?></p>
+</div>
+
+// ❌ WRONG - Never include full HTML structure
+<!DOCTYPE html>
+<html>  <!-- WRONG - layout handles this -->
+```
+
+### 4. Database Pattern
+```php
+// ✅ CORRECT - Use Database class methods
+global $db;
+$db->insert('users', ['name' => 'John', 'email' => 'john@example.com']);
+$users = $db->find('users', ['status' => 'active']);
+$user = $db->findOne('users', ['id' => 1]);
+$db->update('users', ['id' => 1], ['name' => 'Jane']);
+$db->delete('users', ['id' => 1]);
+
+// ❌ WRONG - Never access JSON directly
+$data = json_decode(file_get_contents('data/users.json'), true);  // WRONG
+```
+
+## Design System Rules
+
+### Typography (MUST USE ALL 4 FONTS)
+```html
+<!-- ✅ Headings: Playfair Display -->
+<h1 class="font-playfair">Main Heading</h1>
+<h2 class="font-playfair">Section Title</h2>
+
+<!-- ✅ UI Elements: Poppins -->
+<button class="font-poppins">Click Me</button>
+<label class="font-poppins">Form Label</label>
+<nav class="font-poppins">Navigation</nav>
+
+<!-- ✅ Body Text: Inter -->
+<p class="font-inter">Paragraph content</p>
+<div class="font-inter">Body text</div>
+
+<!-- ✅ Descriptions: Roboto -->
+<p class="font-roboto">Subtitle or description</p>
+<span class="font-roboto">Caption text</span>
+```
+
+### Color Palette (STRICT)
+```css
+/* ✅ ALLOWED COLORS ONLY */
+bg-gray-900       /* Primary black for headers, buttons */
+bg-white          /* White backgrounds */
+bg-gray-50        /* Very light gray for page backgrounds */
+bg-gray-100       /* Light gray for sections */
+
+text-gray-900     /* Primary text */
+text-gray-700     /* Secondary text */
+text-gray-600     /* Tertiary text */
+text-gray-300     /* Light text on dark backgrounds */
+text-white        /* White text */
+
+border-gray-900   /* Strong borders */
+border-gray-200   /* Light borders */
+
+/* ❌ NEVER USE */
+bg-gradient-*     /* NO GRADIENTS */
+bg-indigo-*       /* NO COLORS (except in examples) */
+bg-blue-*         /* NO COLORS */
+bg-red-*          /* NO COLORS */
+```
+
+### Visual Style (STRICT RULES)
+```html
+<!-- ✅ CORRECT - Use borders -->
+<div class="border-2 border-gray-200 hover:border-gray-900">
+
+<!-- ✅ CORRECT - No rounded corners -->
+<div class="bg-white border-2">  <!-- Sharp edges -->
+
+<!-- ❌ WRONG - No shadows -->
+<div class="shadow-lg">  <!-- NEVER USE -->
+
+<!-- ❌ WRONG - No gradients -->
+<div class="bg-gradient-to-r from-blue-500 to-purple-600">  <!-- NEVER USE -->
+
+<!-- ❌ WRONG - No rounded corners -->
+<div class="rounded-lg">  <!-- NEVER USE (except images) -->
+```
+
+### Button Style
+```html
+<!-- ✅ Primary Button -->
+<button class="bg-gray-900 text-white px-8 py-3 font-poppins font-medium hover:bg-gray-800 transition">
+    Button Text
+</button>
+
+<!-- ✅ Secondary Button -->
+<button class="border-2 border-gray-900 text-gray-900 px-8 py-3 font-poppins font-medium hover:bg-gray-50 transition">
+    Button Text
+</button>
+```
+
+### Card Style
+```html
+<!-- ✅ CORRECT Card -->
+<div class="bg-white border-2 border-gray-200 hover:border-gray-900 transition p-6">
+    <h3 class="text-xl font-bold font-poppins text-gray-900">Title</h3>
+    <p class="text-gray-600 font-inter">Content</p>
+</div>
+
+<!-- ❌ WRONG -->
+<div class="bg-white rounded-lg shadow-md hover:shadow-lg p-6">  <!-- NEVER -->
+```
+
+## Security Rules
+
+### Input Sanitization
+```php
+// ✅ Always sanitize user input
+$name = htmlspecialchars($_POST['name'], ENT_QUOTES, 'UTF-8');
+$email = filter_var($_POST['email'], FILTER_SANITIZE_EMAIL);
+
+// ✅ Use helper function
+$name = e($_POST['name']);
+
+// ✅ Validate before processing
+if (!empty($name) && !empty($email)) {
+    // Process data
+}
+```
+
+### File Access Protection
+```apache
+# .htaccess already protects:
+# - /data/ (JSON files)
+# - /config/ (PHP config)
+# - /includes/ (PHP helpers)
+# - /router/ (PHP router)
+# - /components/ (PHP components)
+```
+
+## Session Management
+```php
+// ✅ CORRECT ORDER in index.php
+require_once __DIR__ . '/config/config.php';  // Config FIRST
+session_start();                               // Session AFTER
+
+// ❌ WRONG ORDER
+session_start();                               // WRONG - causes ini_set warnings
+require_once __DIR__ . '/config/config.php';
+```
+
+## Common Patterns
+
+### Form Handling
+```php
+// Route: POST handler with redirect
+$router->post('/contact', function() {
+    global $db;
+    
+    $name = htmlspecialchars($_POST['name'] ?? '');
+    $email = htmlspecialchars($_POST['email'] ?? '');
+    
+    if (!empty($name) && !empty($email)) {
+        $db->insert('contacts', [
+            'name' => $name,
+            'email' => $email,
+            'created_at' => date('Y-m-d H:i:s')
+        ]);
+        $_SESSION['success'] = 'Message sent successfully!';
+    } else {
+        $_SESSION['error'] = 'Please fill all fields.';
+    }
+    
+    header('Location: ' . BASE_URL . 'contact');
+    exit;
+});
+```
+
+### Component Usage
+```php
+// 1. Create component in components/mycomponent.php
+function myComponent($title, $content) {
+    return <<<HTML
+    <div class="border-2 border-gray-200 p-6">
+        <h3 class="font-poppins">{$title}</h3>
+        <p class="font-inter">{$content}</p>
+    </div>
+HTML;
+}
+
+// 2. Load in index.php
+require_once COMPONENTS_PATH . 'mycomponent.php';
+
+// 3. Use in pages/example.php
+<?php echo myComponent('Title', 'Content'); ?>
+```
+
+## When Adding New Features
+
+### New Page Checklist
+- [ ] Create `pages/pagename.php` with content only
+- [ ] Add route in `index.php` using `renderLayout()`
+- [ ] Use appropriate font classes throughout
+- [ ] Follow minimalist design (no gradients/shadows)
+- [ ] Add navigation link in `components/header.php` if needed
+
+### New Component Checklist
+- [ ] Create function in `components/componentname.php`
+- [ ] Return HTML string (don't echo)
+- [ ] Include font classes (playfair, poppins, inter, roboto)
+- [ ] Use borders instead of shadows
+- [ ] Use gray-scale colors only
+- [ ] Load component in `index.php`
+
+### New Database Collection Checklist
+- [ ] Use `$db->insert()` to create first record
+- [ ] JSON file auto-created in `data/` folder
+- [ ] Use `$db->find()` for queries
+- [ ] Never access JSON files directly
+
+## Code Quality Standards
+
+### PHP Standards
+- Use `<?php` opening tag (never short tags)
+- Always use `require_once` for includes
+- Use type hints where possible: `function test(string $param): string`
+- Never suppress errors with `@` operator
+- Use meaningful variable names
+
+### HTML Standards
+- Use semantic HTML5 tags
+- Include alt text for images
+- Proper form labels with for attribute
+- Accessible navigation with proper aria labels
+
+### Performance
+- Minimize database reads (cache in variables if needed)
+- Use isset() to check array keys before access
+- Keep JSON files reasonable size (< 10MB)
+
+## Error Handling
+
+### Development Mode
+```php
+// In config.php
+define('APP_ENV', 'development');
+// Shows all errors
+```
+
+### Production Mode
+```php
+// In config.php
+define('APP_ENV', 'production');
+// Hides errors, logs to file
+```
+
+## Git Rules
+
+### Always Commit
+- Configuration changes
+- New routes
+- New components
+- New pages
+- Design updates
+
+### Never Commit
+- `data/*.json` files (except .gitkeep)
+- Sensitive credentials
+- Local environment settings
+
+---
+
+**Follow these rules strictly to maintain consistency and code quality.**
+

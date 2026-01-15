@@ -1,0 +1,7 @@
+- it should not look ai generated
+- it should use lenis and GSAP
+- it should be responsive
+- it should have excellent layout
+- it should use good transitions and text animations
+- it should use good colors but no gradients
+- it should match the existing colour themes
