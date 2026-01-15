@@ -486,8 +486,28 @@ $router->post('/admin/login', function() {
         header('Location: ' . BASE_URL . 'admin');
         exit;
     }
+
+    // Process login before rendering layout
+    $error = '';
+    $email = trim($_POST['email'] ?? '');
+    $password = $_POST['password'] ?? '';
+
+    if (empty($email) || empty($password)) {
+        $error = 'Please enter both email and password';
+    } else {
+        $result = adminLogin($email, $password);
+        if ($result['success']) {
+            header('Location: ' . BASE_URL . 'admin');
+            exit;
+        } else {
+            $error = $result['message'];
+        }
+    }
+
     renderAdminLoginLayout(PAGES_PATH . 'admin/login.php', [
-        'pageTitle' => 'Admin Login'
+        'pageTitle' => 'Admin Login',
+        'error' => $error,
+        'email' => $email
     ]);
 });
 

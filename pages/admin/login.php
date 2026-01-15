@@ -1,22 +1,7 @@
 <?php
-$error = '';
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $email = trim($_POST['email'] ?? '');
-    $password = $_POST['password'] ?? '';
-
-    if (empty($email) || empty($password)) {
-        $error = 'Please enter both email and password';
-    } else {
-        $result = adminLogin($email, $password);
-        if ($result['success']) {
-            header('Location: ' . BASE_URL . 'admin');
-            exit;
-        } else {
-            $error = $result['message'];
-        }
-    }
-}
+// $error and $email are passed from router
+$error = $error ?? '';
+$email = $email ?? '';
 ?>
 
 <div class="w-full max-w-md">
@@ -48,7 +33,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <input type="email" id="email" name="email" required
                            class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-admin-accent focus:border-admin-accent"
                            placeholder="admin@example.com"
-                           value="<?php echo h($_POST['email'] ?? ''); ?>">
+                           value="<?php echo h($email); ?>">
                 </div>
             </div>
 
