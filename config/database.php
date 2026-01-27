@@ -22,8 +22,12 @@ class Database {
             $this->pdo = new PDO($dsn, DB_USERNAME, DB_PASSWORD, $options);
             $this->initializeTables();
         } catch (PDOException $e) {
-            // Temporarily show error for debugging
-            die('Database connection failed: ' . $e->getMessage() . ' | Host: ' . DB_HOST . ' | DB: ' . DB_DATABASE . ' | User: ' . DB_USERNAME);
+            if (defined('APP_ENV') && APP_ENV === 'development') {
+                die('Database connection failed: ' . $e->getMessage());
+            } else {
+                error_log('Database connection failed: ' . $e->getMessage());
+                die('Database connection failed. Please try again later.');
+            }
         }
     }
 
@@ -141,8 +145,39 @@ class Database {
             $this->pdo->exec($sql);
         }
         
+        // Run migrations for existing tables
+        $this->runMigrations();
+        
         // Seed default admin if no admins exist
         $this->seedDefaultAdmin();
+    }
+    
+    /**
+     * Run migrations for existing tables (add missing columns)
+     */
+    private function runMigrations() {
+        // Add status column to admins if it doesn't exist
+        try {
+            $this->pdo->exec("ALTER TABLE admins ADD COLUMN status VARCHAR(50) DEFAULT 'active' AFTER role");
+        } catch (PDOException $e) {
+            // Column already exists, ignore
+        }
+        
+        // Add missing columns to products if they don't exist
+        $productColumns = [
+            "ADD COLUMN prices JSON AFTER price",
+            "ADD COLUMN flavour VARCHAR(255) AFTER prices",
+            "ADD COLUMN hover_image VARCHAR(255) AFTER image",
+            "ADD COLUMN gallery JSON AFTER hover_image"
+        ];
+        
+        foreach ($productColumns as $alter) {
+            try {
+                $this->pdo->exec("ALTER TABLE products " . $alter);
+            } catch (PDOException $e) {
+                // Column already exists, ignore
+            }
+        }
     }
     
     /**
