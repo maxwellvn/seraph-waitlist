@@ -61,9 +61,12 @@ define('FLUTTERWAVE_PUBLIC_KEY', env('FLUTTERWAVE_PUBLIC_KEY', ''));
 define('FLUTTERWAVE_SECRET_KEY', env('FLUTTERWAVE_SECRET_KEY', ''));
 define('FLUTTERWAVE_ENCRYPTION_KEY', env('FLUTTERWAVE_ENCRYPTION_KEY', ''));
 
-// MongoDB Configuration
-define('MONGODB_URI', env('MONGODB_URI', 'mongodb://localhost:27017'));
-define('MONGODB_DATABASE', env('MONGODB_DATABASE', 'seraph'));
+// MySQL Configuration
+define('DB_HOST', env('DB_HOST', 'localhost'));
+define('DB_PORT', env('DB_PORT', '3306'));
+define('DB_DATABASE', env('DB_DATABASE', 'seraph'));
+define('DB_USERNAME', env('DB_USERNAME', 'root'));
+define('DB_PASSWORD', env('DB_PASSWORD', ''));
 
 // Error Reporting
 if (APP_ENV === 'development') {

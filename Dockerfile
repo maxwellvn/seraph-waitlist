@@ -7,21 +7,10 @@ RUN apt-get update && apt-get install -y \
     zip \
     unzip \
     libzip-dev \
-    libssl-dev \
-    pkg-config \
-    autoconf \
-    gcc \
-    make \
     && rm -rf /var/lib/apt/lists/*
 
-# Install PHP extensions
-RUN docker-php-ext-install zip
-
-# Install MongoDB PHP extension with increased memory limit
-# Using --no-interaction to prevent prompts that could hang the build
-RUN pecl channel-update pecl.php.net \
-    && pecl install mongodb-1.17.3 --configureoptions 'with-mongodb-ssl="openssl"' \
-    && docker-php-ext-enable mongodb
+# Install PHP extensions (PDO MySQL and zip)
+RUN docker-php-ext-install zip pdo pdo_mysql
 
 # Enable Apache modules
 RUN a2enmod rewrite

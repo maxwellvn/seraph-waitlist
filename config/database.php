@@ -1,164 +1,403 @@
 <?php
 
 class Database {
-    private $client;
-    private $database;
+    private $pdo;
+    private $tablePrefix = '';
 
     public function __construct() {
-        $this->client = new MongoDB\Client(MONGODB_URI);
-        $this->database = $this->client->selectDatabase(MONGODB_DATABASE);
+        $dsn = sprintf(
+            'mysql:host=%s;port=%s;dbname=%s;charset=utf8mb4',
+            DB_HOST,
+            DB_PORT,
+            DB_DATABASE
+        );
+        
+        $options = [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+            PDO::ATTR_EMULATE_PREPARES => false,
+        ];
+        
+        $this->pdo = new PDO($dsn, DB_USERNAME, DB_PASSWORD, $options);
+        $this->initializeTables();
     }
 
     /**
-     * Get collection
+     * Initialize database tables if they don't exist
      */
-    private function getCollection($name) {
-        return $this->database->selectCollection($name);
-    }
+    private function initializeTables() {
+        $tables = [
+            'users' => "CREATE TABLE IF NOT EXISTS users (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                email VARCHAR(255) UNIQUE NOT NULL,
+                password VARCHAR(255),
+                name VARCHAR(255),
+                phone VARCHAR(50),
+                addresses JSON,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4",
+            
+            'admins' => "CREATE TABLE IF NOT EXISTS admins (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                email VARCHAR(255) UNIQUE NOT NULL,
+                password VARCHAR(255) NOT NULL,
+                name VARCHAR(255),
+                role VARCHAR(50) DEFAULT 'admin',
+                last_login DATETIME,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4",
+            
+            'products' => "CREATE TABLE IF NOT EXISTS products (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                name VARCHAR(255) NOT NULL,
+                description TEXT,
+                price DECIMAL(10,2) NOT NULL,
+                stock INT DEFAULT 0,
+                image VARCHAR(255),
+                category VARCHAR(100),
+                status VARCHAR(50) DEFAULT 'active',
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4",
+            
+            'orders' => "CREATE TABLE IF NOT EXISTS orders (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                user_id INT,
+                items JSON,
+                subtotal DECIMAL(10,2),
+                shipping_cost DECIMAL(10,2),
+                total DECIMAL(10,2),
+                status VARCHAR(50) DEFAULT 'pending',
+                payment_status VARCHAR(50) DEFAULT 'pending',
+                payment_method VARCHAR(50),
+                payment_reference VARCHAR(255),
+                shipping_address JSON,
+                billing_address JSON,
+                notes TEXT,
+                tracking_number VARCHAR(255),
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                INDEX idx_user_id (user_id),
+                INDEX idx_status (status)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4",
+            
+            'subscribers' => "CREATE TABLE IF NOT EXISTS subscribers (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                email VARCHAR(255) UNIQUE NOT NULL,
+                name VARCHAR(255),
+                status VARCHAR(50) DEFAULT 'active',
+                source VARCHAR(100),
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4",
+            
+            'distributor_applications' => "CREATE TABLE IF NOT EXISTS distributor_applications (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                name VARCHAR(255) NOT NULL,
+                email VARCHAR(255) NOT NULL,
+                phone VARCHAR(50),
+                company VARCHAR(255),
+                country VARCHAR(100),
+                state VARCHAR(100),
+                city VARCHAR(100),
+                message TEXT,
+                status VARCHAR(50) DEFAULT 'pending',
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4",
+            
+            'settings' => "CREATE TABLE IF NOT EXISTS settings (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                setting_key VARCHAR(255) UNIQUE NOT NULL,
+                setting_value JSON,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4",
+            
+            'remember_tokens' => "CREATE TABLE IF NOT EXISTS remember_tokens (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                user_id INT NOT NULL,
+                token VARCHAR(255) NOT NULL,
+                expires_at DATETIME NOT NULL,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                INDEX idx_token (token),
+                INDEX idx_user_id (user_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
+        ];
 
-    /**
-     * Read all data from collection
-     */
-    public function read($collection) {
-        $cursor = $this->getCollection($collection)->find();
-        $results = [];
-        foreach ($cursor as $document) {
-            $results[] = $this->documentToArray($document);
+        foreach ($tables as $tableName => $sql) {
+            $this->pdo->exec($sql);
         }
-        return $results;
     }
 
     /**
-     * Write data to collection (replaces all documents)
+     * Get table name with prefix
      */
-    public function write($collection, $data) {
-        $col = $this->getCollection($collection);
-        $col->deleteMany([]);
-        
-        if (!empty($data)) {
-            $documents = array_map(function($item) {
-                return $this->prepareDocument($item);
-            }, $data);
-            $col->insertMany($documents);
-        }
-        
-        return true;
+    private function getTable($name) {
+        return $this->tablePrefix . $name;
     }
 
     /**
-     * Insert record into collection
+     * Read all data from table
      */
-    public function insert($collection, $record) {
-        $col = $this->getCollection($collection);
+    public function read($table) {
+        $tableName = $this->getTable($table);
+        $stmt = $this->pdo->prepare("SELECT * FROM `{$tableName}`");
+        $stmt->execute();
+        $results = $stmt->fetchAll();
+        return array_map([$this, 'decodeJsonFields'], $results);
+    }
+
+    /**
+     * Write data to table (replaces all records)
+     */
+    public function write($table, $data) {
+        $tableName = $this->getTable($table);
         
-        // Generate ID if not present
-        if (!isset($record['id'])) {
-            $record['id'] = $this->generateId($collection);
+        // Start transaction
+        $this->pdo->beginTransaction();
+        
+        try {
+            // Delete all existing records
+            $this->pdo->exec("DELETE FROM `{$tableName}`");
+            
+            // Insert new records
+            if (!empty($data)) {
+                foreach ($data as $record) {
+                    $this->insertRecord($tableName, $record);
+                }
+            }
+            
+            $this->pdo->commit();
+            return true;
+        } catch (Exception $e) {
+            $this->pdo->rollBack();
+            throw $e;
+        }
+    }
+
+    /**
+     * Insert record into table
+     */
+    public function insert($table, $record) {
+        $tableName = $this->getTable($table);
+        
+        // Remove id if it's null or not set to let auto-increment work
+        if (isset($record['id']) && empty($record['id'])) {
+            unset($record['id']);
         }
         
-        $col->insertOne($this->prepareDocument($record));
+        $id = $this->insertRecord($tableName, $record);
+        $record['id'] = $id;
         
         return $record;
     }
 
     /**
-     * Find records by criteria
+     * Internal insert helper
      */
-    public function find($collection, $criteria = []) {
-        $col = $this->getCollection($collection);
-        $cursor = $col->find($criteria);
+    private function insertRecord($tableName, $record) {
+        $record = $this->encodeJsonFields($record);
         
-        $results = [];
-        foreach ($cursor as $document) {
-            $results[] = $this->documentToArray($document);
+        $columns = array_keys($record);
+        $placeholders = array_map(function($col) { return ':' . $col; }, $columns);
+        
+        $sql = sprintf(
+            "INSERT INTO `%s` (%s) VALUES (%s)",
+            $tableName,
+            implode(', ', array_map(function($c) { return "`{$c}`"; }, $columns)),
+            implode(', ', $placeholders)
+        );
+        
+        $stmt = $this->pdo->prepare($sql);
+        
+        foreach ($record as $key => $value) {
+            $stmt->bindValue(':' . $key, $value);
         }
         
-        return $results;
+        $stmt->execute();
+        
+        return $this->pdo->lastInsertId() ?: ($record['id'] ?? null);
+    }
+
+    /**
+     * Find records by criteria
+     */
+    public function find($table, $criteria = []) {
+        $tableName = $this->getTable($table);
+        
+        if (empty($criteria)) {
+            return $this->read($table);
+        }
+        
+        $where = [];
+        $params = [];
+        
+        foreach ($criteria as $key => $value) {
+            $where[] = "`{$key}` = :{$key}";
+            $params[$key] = $value;
+        }
+        
+        $sql = sprintf(
+            "SELECT * FROM `%s` WHERE %s",
+            $tableName,
+            implode(' AND ', $where)
+        );
+        
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
+        
+        $results = $stmt->fetchAll();
+        return array_map([$this, 'decodeJsonFields'], $results);
     }
 
     /**
      * Find one record by criteria
      */
-    public function findOne($collection, $criteria) {
-        $col = $this->getCollection($collection);
-        $document = $col->findOne($criteria);
+    public function findOne($table, $criteria) {
+        $tableName = $this->getTable($table);
         
-        return $document ? $this->documentToArray($document) : null;
+        $where = [];
+        $params = [];
+        
+        foreach ($criteria as $key => $value) {
+            $where[] = "`{$key}` = :{$key}";
+            $params[$key] = $value;
+        }
+        
+        $sql = sprintf(
+            "SELECT * FROM `%s` WHERE %s LIMIT 1",
+            $tableName,
+            implode(' AND ', $where)
+        );
+        
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
+        
+        $result = $stmt->fetch();
+        return $result ? $this->decodeJsonFields($result) : null;
     }
 
     /**
      * Update records by criteria
      */
-    public function update($collection, $criteria, $updates) {
-        $col = $this->getCollection($collection);
-        $result = $col->updateMany($criteria, ['$set' => $updates]);
+    public function update($table, $criteria, $updates) {
+        $tableName = $this->getTable($table);
+        $updates = $this->encodeJsonFields($updates);
         
-        return $result->getModifiedCount() > 0;
+        $set = [];
+        $params = [];
+        
+        foreach ($updates as $key => $value) {
+            $set[] = "`{$key}` = :set_{$key}";
+            $params['set_' . $key] = $value;
+        }
+        
+        $where = [];
+        foreach ($criteria as $key => $value) {
+            $where[] = "`{$key}` = :where_{$key}";
+            $params['where_' . $key] = $value;
+        }
+        
+        $sql = sprintf(
+            "UPDATE `%s` SET %s WHERE %s",
+            $tableName,
+            implode(', ', $set),
+            implode(' AND ', $where)
+        );
+        
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
+        
+        return $stmt->rowCount() > 0;
     }
 
     /**
      * Delete records by criteria
      */
-    public function delete($collection, $criteria) {
-        $col = $this->getCollection($collection);
-        $result = $col->deleteMany($criteria);
+    public function delete($table, $criteria) {
+        $tableName = $this->getTable($table);
         
-        return $result->getDeletedCount();
-    }
-
-    /**
-     * Generate unique ID
-     */
-    private function generateId($collection) {
-        $col = $this->getCollection($collection);
-        $lastDoc = $col->findOne([], [
-            'sort' => ['id' => -1],
-            'projection' => ['id' => 1]
-        ]);
+        $where = [];
+        $params = [];
         
-        return $lastDoc ? ($lastDoc['id'] + 1) : 1;
+        foreach ($criteria as $key => $value) {
+            $where[] = "`{$key}` = :{$key}";
+            $params[$key] = $value;
+        }
+        
+        $sql = sprintf(
+            "DELETE FROM `%s` WHERE %s",
+            $tableName,
+            implode(' AND ', $where)
+        );
+        
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
+        
+        return $stmt->rowCount();
     }
 
     /**
-     * Check if collection exists and has documents
+     * Check if table has records
      */
-    public function exists($collection) {
-        $col = $this->getCollection($collection);
-        return $col->countDocuments() > 0;
+    public function exists($table) {
+        $tableName = $this->getTable($table);
+        $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM `{$tableName}`");
+        $stmt->execute();
+        return $stmt->fetchColumn() > 0;
     }
 
     /**
-     * Delete collection
+     * Drop/truncate table
      */
-    public function dropCollection($collection) {
-        $this->getCollection($collection)->drop();
+    public function dropCollection($table) {
+        $tableName = $this->getTable($table);
+        $this->pdo->exec("TRUNCATE TABLE `{$tableName}`");
         return true;
     }
 
     /**
-     * Convert MongoDB document to array
+     * Encode array/object fields to JSON for storage
      */
-    private function documentToArray($document) {
-        $array = (array) $document;
-        unset($array['_id']); // Remove MongoDB's internal _id
+    private function encodeJsonFields($record) {
+        $jsonFields = ['addresses', 'items', 'shipping_address', 'billing_address', 'setting_value'];
         
-        // Recursively convert nested objects
-        foreach ($array as $key => $value) {
-            if ($value instanceof MongoDB\Model\BSONArray) {
-                $array[$key] = $value->getArrayCopy();
-            } elseif ($value instanceof MongoDB\Model\BSONDocument) {
-                $array[$key] = (array) $value;
+        foreach ($record as $key => $value) {
+            if (is_array($value) || is_object($value)) {
+                $record[$key] = json_encode($value);
             }
         }
         
-        return $array;
+        return $record;
     }
 
     /**
-     * Prepare document for insertion
+     * Decode JSON fields back to arrays
      */
-    private function prepareDocument($data) {
-        // Ensure arrays are properly formatted for MongoDB
-        return $data;
+    private function decodeJsonFields($record) {
+        if (!$record) return $record;
+        
+        $jsonFields = ['addresses', 'items', 'shipping_address', 'billing_address', 'setting_value'];
+        
+        foreach ($record as $key => $value) {
+            if (in_array($key, $jsonFields) && is_string($value)) {
+                $decoded = json_decode($value, true);
+                if (json_last_error() === JSON_ERROR_NONE) {
+                    $record[$key] = $decoded;
+                }
+            }
+        }
+        
+        return $record;
+    }
+
+    /**
+     * Get PDO instance for advanced queries
+     */
+    public function getPdo() {
+        return $this->pdo;
     }
 }
