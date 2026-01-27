@@ -22,12 +22,8 @@ class Database {
             $this->pdo = new PDO($dsn, DB_USERNAME, DB_PASSWORD, $options);
             $this->initializeTables();
         } catch (PDOException $e) {
-            if (defined('APP_ENV') && APP_ENV === 'development') {
-                die('Database connection failed: ' . $e->getMessage());
-            } else {
-                error_log('Database connection failed: ' . $e->getMessage());
-                die('Database connection failed. Please try again later.');
-            }
+            // Temporarily show error for debugging
+            die('Database connection failed: ' . $e->getMessage() . ' | Host: ' . DB_HOST . ' | DB: ' . DB_DATABASE . ' | User: ' . DB_USERNAME);
         }
     }
 
