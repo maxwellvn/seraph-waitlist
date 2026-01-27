@@ -44,6 +44,7 @@ class Database {
                 password VARCHAR(255) NOT NULL,
                 name VARCHAR(255),
                 role VARCHAR(50) DEFAULT 'admin',
+                status VARCHAR(50) DEFAULT 'active',
                 last_login DATETIME,
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
@@ -129,6 +130,47 @@ class Database {
 
         foreach ($tables as $tableName => $sql) {
             $this->pdo->exec($sql);
+        }
+        
+        // Seed default admin if no admins exist
+        $this->seedDefaultAdmin();
+    }
+    
+    /**
+     * Seed default admin account if none exists
+     */
+    private function seedDefaultAdmin() {
+        $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM admins");
+        $stmt->execute();
+        $count = $stmt->fetchColumn();
+        
+        if ($count == 0) {
+            $admin = [
+                'email' => defined('ADMIN_DEFAULT_EMAIL') ? ADMIN_DEFAULT_EMAIL : 'admin@example.com',
+                'password' => password_hash(
+                    defined('ADMIN_DEFAULT_PASSWORD') ? ADMIN_DEFAULT_PASSWORD : 'changeme123',
+                    PASSWORD_DEFAULT
+                ),
+                'name' => defined('ADMIN_DEFAULT_NAME') ? ADMIN_DEFAULT_NAME : 'Admin',
+                'role' => 'super_admin',
+                'status' => 'active',
+                'created_at' => date('Y-m-d H:i:s')
+            ];
+            
+            $columns = array_keys($admin);
+            $placeholders = array_map(function($col) { return ':' . $col; }, $columns);
+            
+            $sql = sprintf(
+                "INSERT INTO admins (%s) VALUES (%s)",
+                implode(', ', array_map(function($c) { return "`{$c}`"; }, $columns)),
+                implode(', ', $placeholders)
+            );
+            
+            $stmt = $this->pdo->prepare($sql);
+            foreach ($admin as $key => $value) {
+                $stmt->bindValue(':' . $key, $value);
+            }
+            $stmt->execute();
         }
     }
 

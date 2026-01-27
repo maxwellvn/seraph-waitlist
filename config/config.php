@@ -68,6 +68,11 @@ define('DB_DATABASE', env('DB_DATABASE', 'seraph'));
 define('DB_USERNAME', env('DB_USERNAME', 'root'));
 define('DB_PASSWORD', env('DB_PASSWORD', ''));
 
+// Default Admin Credentials (for initial setup)
+define('ADMIN_DEFAULT_EMAIL', env('ADMIN_DEFAULT_EMAIL', 'admin@example.com'));
+define('ADMIN_DEFAULT_PASSWORD', env('ADMIN_DEFAULT_PASSWORD', 'changeme123'));
+define('ADMIN_DEFAULT_NAME', env('ADMIN_DEFAULT_NAME', 'Admin'));
+
 // Error Reporting
 if (APP_ENV === 'development') {
     error_reporting(E_ALL);
