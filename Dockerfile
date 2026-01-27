@@ -5,9 +5,15 @@ RUN apt-get update && apt-get install -y \
     curl \
     zip \
     unzip \
-    libzip-dev
+    libzip-dev \
+    libssl-dev \
+    pkg-config
 
-RUN docker-php-ext-install mysqli pdo pdo_mysql zip
+# Install PHP extensions
+RUN docker-php-ext-install zip
+
+# Install MongoDB PHP extension
+RUN pecl install mongodb && docker-php-ext-enable mongodb
 
 RUN a2enmod rewrite
 
@@ -17,11 +23,8 @@ COPY . /var/www/html/
 
 WORKDIR /var/www/html
 
-RUN if [ -f "composer.json" ]; then composer install --no-dev --optimize-autoloader; fi
+RUN composer install --no-dev --optimize-autoloader
 
 RUN chown -R www-data:www-data /var/www/html
-
-# Ensure data directory exists with proper permissions (volume will overlay)
-RUN mkdir -p /var/www/html/data && chmod 777 /var/www/html/data
 
 EXPOSE 80

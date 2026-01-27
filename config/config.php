@@ -61,6 +61,10 @@ define('FLUTTERWAVE_PUBLIC_KEY', env('FLUTTERWAVE_PUBLIC_KEY', ''));
 define('FLUTTERWAVE_SECRET_KEY', env('FLUTTERWAVE_SECRET_KEY', ''));
 define('FLUTTERWAVE_ENCRYPTION_KEY', env('FLUTTERWAVE_ENCRYPTION_KEY', ''));
 
+// MongoDB Configuration
+define('MONGODB_URI', env('MONGODB_URI', 'mongodb://localhost:27017'));
+define('MONGODB_DATABASE', env('MONGODB_DATABASE', 'seraph'));
+
 // Error Reporting
 if (APP_ENV === 'development') {
     error_reporting(E_ALL);

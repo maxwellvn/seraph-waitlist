@@ -1,54 +1,62 @@
 <?php
 
 class Database {
-    private $dataPath;
+    private $client;
+    private $database;
 
-    public function __construct($dataPath = DATA_PATH) {
-        $this->dataPath = $dataPath;
-        
-        // Create data directory if it doesn't exist
-        if (!is_dir($this->dataPath)) {
-            mkdir($this->dataPath, 0755, true);
-        }
+    public function __construct() {
+        $this->client = new MongoDB\Client(MONGODB_URI);
+        $this->database = $this->client->selectDatabase(MONGODB_DATABASE);
     }
 
     /**
-     * Read data from JSON file
+     * Get collection
      */
-    public function read($filename) {
-        $filepath = $this->dataPath . $filename . '.json';
-        
-        if (!file_exists($filepath)) {
-            return [];
-        }
-
-        $content = file_get_contents($filepath);
-        return json_decode($content, true) ?? [];
+    private function getCollection($name) {
+        return $this->database->selectCollection($name);
     }
 
     /**
-     * Write data to JSON file
+     * Read all data from collection
      */
-    public function write($filename, $data) {
-        $filepath = $this->dataPath . $filename . '.json';
-        $json = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+    public function read($collection) {
+        $cursor = $this->getCollection($collection)->find();
+        $results = [];
+        foreach ($cursor as $document) {
+            $results[] = $this->documentToArray($document);
+        }
+        return $results;
+    }
+
+    /**
+     * Write data to collection (replaces all documents)
+     */
+    public function write($collection, $data) {
+        $col = $this->getCollection($collection);
+        $col->deleteMany([]);
         
-        return file_put_contents($filepath, $json) !== false;
+        if (!empty($data)) {
+            $documents = array_map(function($item) {
+                return $this->prepareDocument($item);
+            }, $data);
+            $col->insertMany($documents);
+        }
+        
+        return true;
     }
 
     /**
      * Insert record into collection
      */
     public function insert($collection, $record) {
-        $data = $this->read($collection);
+        $col = $this->getCollection($collection);
         
         // Generate ID if not present
         if (!isset($record['id'])) {
-            $record['id'] = $this->generateId($data);
+            $record['id'] = $this->generateId($collection);
         }
         
-        $data[] = $record;
-        $this->write($collection, $data);
+        $col->insertOne($this->prepareDocument($record));
         
         return $record;
     }
@@ -57,114 +65,100 @@ class Database {
      * Find records by criteria
      */
     public function find($collection, $criteria = []) {
-        $data = $this->read($collection);
+        $col = $this->getCollection($collection);
+        $cursor = $col->find($criteria);
         
-        if (empty($criteria)) {
-            return $data;
+        $results = [];
+        foreach ($cursor as $document) {
+            $results[] = $this->documentToArray($document);
         }
-
-        return array_filter($data, function($record) use ($criteria) {
-            foreach ($criteria as $key => $value) {
-                if (!isset($record[$key]) || $record[$key] !== $value) {
-                    return false;
-                }
-            }
-            return true;
-        });
+        
+        return $results;
     }
 
     /**
      * Find one record by criteria
      */
     public function findOne($collection, $criteria) {
-        $results = $this->find($collection, $criteria);
-        return !empty($results) ? reset($results) : null;
+        $col = $this->getCollection($collection);
+        $document = $col->findOne($criteria);
+        
+        return $document ? $this->documentToArray($document) : null;
     }
 
     /**
      * Update records by criteria
      */
     public function update($collection, $criteria, $updates) {
-        $data = $this->read($collection);
-        $updated = false;
-
-        foreach ($data as &$record) {
-            $match = true;
-            foreach ($criteria as $key => $value) {
-                if (!isset($record[$key]) || $record[$key] !== $value) {
-                    $match = false;
-                    break;
-                }
-            }
-
-            if ($match) {
-                foreach ($updates as $key => $value) {
-                    $record[$key] = $value;
-                }
-                $updated = true;
-            }
-        }
-
-        if ($updated) {
-            $this->write($collection, $data);
-        }
-
-        return $updated;
+        $col = $this->getCollection($collection);
+        $result = $col->updateMany($criteria, ['$set' => $updates]);
+        
+        return $result->getModifiedCount() > 0;
     }
 
     /**
      * Delete records by criteria
      */
     public function delete($collection, $criteria) {
-        $data = $this->read($collection);
-        $originalCount = count($data);
-
-        $data = array_filter($data, function($record) use ($criteria) {
-            foreach ($criteria as $key => $value) {
-                if (!isset($record[$key]) || $record[$key] !== $value) {
-                    return true;
-                }
-            }
-            return false;
-        });
-
-        $deletedCount = $originalCount - count($data);
-
-        if ($deletedCount > 0) {
-            $this->write($collection, array_values($data));
-        }
-
-        return $deletedCount;
+        $col = $this->getCollection($collection);
+        $result = $col->deleteMany($criteria);
+        
+        return $result->getDeletedCount();
     }
 
     /**
      * Generate unique ID
      */
-    private function generateId($data) {
-        if (empty($data)) {
-            return 1;
-        }
-
-        $ids = array_column($data, 'id');
-        return max($ids) + 1;
+    private function generateId($collection) {
+        $col = $this->getCollection($collection);
+        $lastDoc = $col->findOne([], [
+            'sort' => ['id' => -1],
+            'projection' => ['id' => 1]
+        ]);
+        
+        return $lastDoc ? ($lastDoc['id'] + 1) : 1;
     }
 
     /**
-     * Check if collection exists
+     * Check if collection exists and has documents
      */
     public function exists($collection) {
-        return file_exists($this->dataPath . $collection . '.json');
+        $col = $this->getCollection($collection);
+        return $col->countDocuments() > 0;
     }
 
     /**
      * Delete collection
      */
     public function dropCollection($collection) {
-        $filepath = $this->dataPath . $collection . '.json';
-        if (file_exists($filepath)) {
-            return unlink($filepath);
+        $this->getCollection($collection)->drop();
+        return true;
+    }
+
+    /**
+     * Convert MongoDB document to array
+     */
+    private function documentToArray($document) {
+        $array = (array) $document;
+        unset($array['_id']); // Remove MongoDB's internal _id
+        
+        // Recursively convert nested objects
+        foreach ($array as $key => $value) {
+            if ($value instanceof MongoDB\Model\BSONArray) {
+                $array[$key] = $value->getArrayCopy();
+            } elseif ($value instanceof MongoDB\Model\BSONDocument) {
+                $array[$key] = (array) $value;
+            }
         }
-        return false;
+        
+        return $array;
+    }
+
+    /**
+     * Prepare document for insertion
+     */
+    private function prepareDocument($data) {
+        // Ensure arrays are properly formatted for MongoDB
+        return $data;
     }
 }
-
