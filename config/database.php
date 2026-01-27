@@ -150,6 +150,9 @@ class Database {
         
         // Seed default admin if no admins exist
         $this->seedDefaultAdmin();
+        
+        // Seed default products if none exist
+        $this->seedDefaultProducts();
     }
     
     /**
@@ -218,6 +221,79 @@ class Database {
         }
     }
 
+    /**
+     * Seed default products if none exist
+     */
+    private function seedDefaultProducts() {
+        $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM products");
+        $stmt->execute();
+        $count = $stmt->fetchColumn();
+        
+        if ($count == 0) {
+            $products = [
+                [
+                    'name' => 'Seraph Turmeric',
+                    'flavour' => 'Turmeric',
+                    'description' => 'Experience the natural healing power of turmeric with our fluoride-free toothpaste. Turmeric has been used for centuries for its anti-inflammatory and antibacterial properties, making it perfect for maintaining healthy gums and fresh breath.',
+                    'price' => 2500,
+                    'prices' => json_encode(['NGN' => 2500, 'GBP' => 3.50, 'USD' => 4.40]),
+                    'stock' => 100,
+                    'image' => 'turmeric.jpg',
+                    'hover_image' => 'turmeric-hover.jpg',
+                    'gallery' => json_encode(['turmeric.jpg', 'turmeric-hover.jpg', 'turmeric-gallery.jpg']),
+                    'category' => 'toothpaste',
+                    'status' => 'active',
+                    'created_at' => date('Y-m-d H:i:s')
+                ],
+                [
+                    'name' => 'Seraph Strawberry',
+                    'flavour' => 'Strawberry',
+                    'description' => 'A delightful strawberry-flavored fluoride-free toothpaste that makes brushing a pleasure. Perfect for those who prefer a sweet, fruity taste while maintaining excellent oral hygiene naturally.',
+                    'price' => 2500,
+                    'prices' => json_encode(['NGN' => 2500, 'GBP' => 3.50, 'USD' => 4.40]),
+                    'stock' => 100,
+                    'image' => 'strawberry.jpg',
+                    'hover_image' => 'strawberry-hover.jpg',
+                    'gallery' => json_encode(['strawberry.jpg', 'strawberry-hover.jpg', 'strawberry-gallery.jpg']),
+                    'category' => 'toothpaste',
+                    'status' => 'active',
+                    'created_at' => date('Y-m-d H:i:s')
+                ],
+                [
+                    'name' => 'Seraph Peach',
+                    'flavour' => 'Peach',
+                    'description' => 'Indulge in the refreshing taste of peach with our natural fluoride-free toothpaste. This gentle formula provides effective cleaning while leaving your mouth feeling fresh and naturally clean.',
+                    'price' => 2500,
+                    'prices' => json_encode(['NGN' => 2500, 'GBP' => 3.50, 'USD' => 4.40]),
+                    'stock' => 100,
+                    'image' => 'peach.jpg',
+                    'hover_image' => 'peach-hover.jpg',
+                    'gallery' => json_encode(['peach.jpg', 'peach-hover.jpg', 'peach-gallery.jpg']),
+                    'category' => 'toothpaste',
+                    'status' => 'active',
+                    'created_at' => date('Y-m-d H:i:s')
+                ]
+            ];
+            
+            foreach ($products as $product) {
+                $columns = array_keys($product);
+                $placeholders = array_map(function($col) { return ':' . $col; }, $columns);
+                
+                $sql = sprintf(
+                    "INSERT INTO products (%s) VALUES (%s)",
+                    implode(', ', array_map(function($c) { return "`{$c}`"; }, $columns)),
+                    implode(', ', $placeholders)
+                );
+                
+                $stmt = $this->pdo->prepare($sql);
+                foreach ($product as $key => $value) {
+                    $stmt->bindValue(':' . $key, $value);
+                }
+                $stmt->execute();
+            }
+        }
+    }
+    
     /**
      * Get table name with prefix
      */
