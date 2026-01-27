@@ -5,21 +5,30 @@ class Database {
     private $tablePrefix = '';
 
     public function __construct() {
-        $dsn = sprintf(
-            'mysql:host=%s;port=%s;dbname=%s;charset=utf8mb4',
-            DB_HOST,
-            DB_PORT,
-            DB_DATABASE
-        );
-        
-        $options = [
-            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-            PDO::ATTR_EMULATE_PREPARES => false,
-        ];
-        
-        $this->pdo = new PDO($dsn, DB_USERNAME, DB_PASSWORD, $options);
-        $this->initializeTables();
+        try {
+            $dsn = sprintf(
+                'mysql:host=%s;port=%s;dbname=%s;charset=utf8mb4',
+                DB_HOST,
+                DB_PORT,
+                DB_DATABASE
+            );
+            
+            $options = [
+                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+                PDO::ATTR_EMULATE_PREPARES => false,
+            ];
+            
+            $this->pdo = new PDO($dsn, DB_USERNAME, DB_PASSWORD, $options);
+            $this->initializeTables();
+        } catch (PDOException $e) {
+            if (defined('APP_ENV') && APP_ENV === 'development') {
+                die('Database connection failed: ' . $e->getMessage());
+            } else {
+                error_log('Database connection failed: ' . $e->getMessage());
+                die('Database connection failed. Please try again later.');
+            }
+        }
     }
 
     /**
@@ -54,9 +63,13 @@ class Database {
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 name VARCHAR(255) NOT NULL,
                 description TEXT,
-                price DECIMAL(10,2) NOT NULL,
+                price DECIMAL(10,2) DEFAULT 0,
+                prices JSON,
+                flavour VARCHAR(255),
                 stock INT DEFAULT 0,
                 image VARCHAR(255),
+                hover_image VARCHAR(255),
+                gallery JSON,
                 category VARCHAR(100),
                 status VARCHAR(50) DEFAULT 'active',
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -422,7 +435,7 @@ class Database {
     private function decodeJsonFields($record) {
         if (!$record) return $record;
         
-        $jsonFields = ['addresses', 'items', 'shipping_address', 'billing_address', 'setting_value'];
+        $jsonFields = ['addresses', 'items', 'shipping_address', 'billing_address', 'setting_value', 'prices', 'gallery'];
         
         foreach ($record as $key => $value) {
             if (in_array($key, $jsonFields) && is_string($value)) {
